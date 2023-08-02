@@ -3,7 +3,6 @@ members = [
     "parser",
     "circom",
     "compiler",
-    "debug-constraints",
     "type_analysis",
     "circom_algebra",
     "constraint_list",
