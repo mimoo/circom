@@ -53,6 +53,14 @@ impl PreExecutedTemplate {
     }
 }
 
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+pub static ZKSEC: Lazy<Mutex<Vec<String>>> = Lazy::new(|| {
+    let res = vec![];
+    Mutex::new(res)
+});
+
 pub struct ExecutedTemplate {
     pub code: Statement,
     pub template_name: String,
@@ -195,28 +203,28 @@ impl ExecutedTemplate {
         callstack: &[String],
     ) {
         // debug constraints
-        if let Ok(outfile) = std::env::var("ZKSEC_CONSTRAINTS") {
-            let mut res = "{ ".to_string();
-            res.push_str(&format!("\"callstack\": \"{}\", ", callstack.join(" > ")));
-            res.push_str(&format!("\"filename\": \"{filename}\", "));
-            res.push_str(&format!("\"line_num\": {}, ", line_num));
-            res.push_str(&format!("\"line\": \"{}\", ", line));
-            res.push_str(&format!(
-                "\"constraint\": \"{}\"",
-                constraint.pretty(&self.template_name)
-            ));
-            res.push_str(" }");
+        //        if let Ok(outfile) = std::env::var("ZKSEC_CONSTRAINTS") {
+        let mut res = "{ ".to_string();
+        res.push_str(&format!("\"callstack\": \"{}\", ", callstack.join(" > ")));
+        res.push_str(&format!("\"filename\": \"{filename}\", "));
+        res.push_str(&format!("\"line_num\": {}, ", line_num));
+        res.push_str(&format!("\"line\": \"{}\", ", line));
+        res.push_str(&format!("\"constraint\": \"{}\"", constraint.pretty(&self.template_name)));
+        res.push_str(" }");
 
-            if outfile == "" {
-                println!("{res}");
-            }
+        // if outfile == "" {
+        //     println!("{res}");
+        // }
 
-            // write to file
-            let mut file =
-                std::fs::OpenOptions::new().append(true).create(true).open(outfile).unwrap();
-            file.write_all(res.as_bytes()).unwrap();
-            file.write_all(b"\n").unwrap();
-        }
+        // write to file
+        let mut thing = ZKSEC.lock().unwrap();
+        thing.push(res);
+
+        // let outfile = "/tmp/here.json";
+        // let mut file = std::fs::OpenOptions::new().append(true).create(true).open(outfile).unwrap();
+        // file.write_all(res.as_bytes()).unwrap();
+        // file.write_all(b"\n").unwrap();
+        //        }
 
         self.constraints.push(constraint);
     }

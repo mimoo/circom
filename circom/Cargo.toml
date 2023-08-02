@@ -1,7 +1,7 @@
 [package]
 name = "circom"
 version = "2.1.6"
-authors = ["Costa Group UCM","iden3"]
+authors = ["Costa Group UCM", "iden3"]
 edition = "2018"
 
 description = "circom is a zkSnark circuit compiler"
@@ -9,11 +9,11 @@ homepage = "https://iden3.io/circom"
 documentation = "https://docs.circom.io"
 repository = "https://github.com/iden3/circom"
 readme = "README.md"
-keywords = ["zkproofs", "zksanrks","circuits","compiler"]
+keywords = ["zkproofs", "zksanrks", "circuits", "compiler"]
 categories = ["compilers"]
 
 [dependencies]
-parser = {path = "../parser"}
+parser = { path = "../parser" }
 program_structure = { path = "../program_structure" }
 type_analysis = { path = "../type_analysis" }
 constraint_generation = { path = "../constraint_generation" }

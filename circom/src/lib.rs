@@ -4,9 +4,24 @@ pub mod input_user;
 pub mod parser_user;
 pub mod type_analysis_user;
 
+use std::path::PathBuf;
+
 use input_user::Input;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
+pub fn write_file(path: PathBuf, src: String) {
+    parser::FILES.lock().unwrap().insert(path, src);
+}
+
+pub fn reset() {
+    parser::FILES.lock().unwrap().clear();
+    constraint_generation::execution_data::executed_template::ZKSEC.lock().unwrap().clear()
+}
+
+pub fn get_analysis() -> Vec<String> {
+    constraint_generation::execution_data::executed_template::ZKSEC.lock().unwrap().clone()
+}
 
 pub fn start(user_input: Input) -> Result<(), ()> {
     use compilation_user::CompilerConfig;
@@ -32,22 +47,22 @@ pub fn start(user_input: Input) -> Result<(), ()> {
         prime: user_input.prime(),
     };
     let circuit = execution_user::execute_project(program_archive, config)?;
-    let compilation_config = CompilerConfig {
-        vcp: circuit,
-        debug_output: user_input.print_ir_flag(),
-        c_flag: user_input.c_flag(),
-        wasm_flag: user_input.wasm_flag(),
-        wat_flag: user_input.wat_flag(),
-        js_folder: user_input.js_folder().to_string(),
-        wasm_name: user_input.wasm_name().to_string(),
-        c_folder: user_input.c_folder().to_string(),
-        c_run_name: user_input.c_run_name().to_string(),
-        c_file: user_input.c_file().to_string(),
-        dat_file: user_input.dat_file().to_string(),
-        wat_file: user_input.wat_file().to_string(),
-        wasm_file: user_input.wasm_file().to_string(),
-        produce_input_log: user_input.main_inputs_flag(),
-    };
-    compilation_user::compile(compilation_config)?;
+    // let compilation_config = CompilerConfig {
+    //     vcp: circuit,
+    //     debug_output: user_input.print_ir_flag(),
+    //     c_flag: user_input.c_flag(),
+    //     wasm_flag: user_input.wasm_flag(),
+    //     wat_flag: user_input.wat_flag(),
+    //     js_folder: user_input.js_folder().to_string(),
+    //     wasm_name: user_input.wasm_name().to_string(),
+    //     c_folder: user_input.c_folder().to_string(),
+    //     c_run_name: user_input.c_run_name().to_string(),
+    //     c_file: user_input.c_file().to_string(),
+    //     dat_file: user_input.dat_file().to_string(),
+    //     wat_file: user_input.wat_file().to_string(),
+    //     wasm_file: user_input.wasm_file().to_string(),
+    //     produce_input_log: user_input.main_inputs_flag(),
+    // };
+    // compilation_user::compile(compilation_config)?;
     Result::Ok(())
 }
