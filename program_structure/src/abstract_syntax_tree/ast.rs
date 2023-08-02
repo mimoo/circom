@@ -257,6 +257,25 @@ pub enum Statement {
     },
 }
 
+impl Statement {
+    pub fn meta(&self) -> &Meta {
+        match self {
+            Statement::IfThenElse { meta, .. } => meta,
+            Statement::While { meta, .. } => meta,
+            Statement::Return { meta, .. } => meta,
+            Statement::InitializationBlock { meta, .. } => meta,
+            Statement::Declaration { meta, .. } => meta,
+            Statement::Substitution { meta, .. } => meta,
+            Statement::MultSubstitution { meta, .. } => meta,
+            Statement::UnderscoreSubstitution { meta, .. } => meta,
+            Statement::ConstraintEquality { meta, .. } => meta,
+            Statement::LogCall { meta, .. } => meta,
+            Statement::Block { meta, .. } => meta,
+            Statement::Assert { meta, .. } => meta,
+        }
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum SignalType {
     Output,

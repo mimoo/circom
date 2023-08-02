@@ -56,9 +56,11 @@ pub fn build_circuit(program: ProgramArchive, config: BuildConfig) -> BuildRespo
         Report::print_reports(&warnings, &files);
     }
     if config.flag_f {
+        println!("NOT Simplifying constraints...");
         sync_dag_and_vcp(&mut vcp, &mut dag);
         Result::Ok((Box::new(dag), vcp))
     } else {
+        println!("Simplifying constraints...");
         let list = simplification_process(&mut vcp, dag, &config);
         Result::Ok((Box::new(list), vcp))
     }

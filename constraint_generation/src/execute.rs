@@ -30,6 +30,20 @@ enum BlockType {
     Unknown,
 }
 
+fn find_exact_line(source: &str, start: usize) -> usize {
+    let mut line_number = 1;
+    for (i, c) in source.chars().enumerate() {
+        if i == start {
+            break;
+        }
+        if c == '\n' {
+            line_number += 1;
+        }
+    }
+
+    line_number
+}
+
 struct RuntimeInformation {
     pub block_type: BlockType,
     pub analysis: Analysis,
@@ -321,7 +335,23 @@ fn execute_statement(
                                 let expr = AExpr::sub(&symbol, &value_right, &p);
                                 let ctr = AExpr::transform_expression_to_constraint_form(expr, &p)
                                     .unwrap();
-                                node.add_constraint(ctr);
+
+                                // compute line number based on meta.start in file.source()
+                                let file = program_archive
+                                    .file_library
+                                    .files
+                                    .get(runtime.current_file)
+                                    .unwrap();
+                                let line_num = find_exact_line(file.source(), meta.start);
+                                let line = &file.source()[meta.start..meta.end];
+
+                                node.add_constraint(
+                                    ctr,
+                                    file.name(),
+                                    line_num,
+                                    line,
+                                    &runtime.call_trace,
+                                );
                             }
                         } else if let AssignOp::AssignSignal = op {
                             // needs fix, check case arrays
@@ -409,7 +439,18 @@ fn execute_statement(
                 )
                 .unwrap();
                 if let Option::Some(node) = actual_node {
-                    node.add_constraint(constraint_expression);
+                    let file =
+                        program_archive.file_library.files.get(runtime.current_file).unwrap();
+                    let line_num = find_exact_line(file.source(), meta.start);
+                    let line = &file.source()[meta.start..meta.end];
+
+                    node.add_constraint(
+                        constraint_expression,
+                        file.name(),
+                        line_num,
+                        line,
+                        &runtime.call_trace,
+                    );
                 }
             }
             Option::None

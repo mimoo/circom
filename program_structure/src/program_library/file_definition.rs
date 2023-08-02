@@ -9,7 +9,7 @@ type FileStorage = SimpleFiles<FilePath, FileSource>;
 
 #[derive(Clone)]
 pub struct FileLibrary {
-    files: FileStorage,
+    pub files: FileStorage,
 }
 
 impl Default for FileLibrary {

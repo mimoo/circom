@@ -5,6 +5,7 @@ use dag::DAG;
 use num_bigint::BigInt;
 use program_structure::ast::{SignalType, Statement};
 use std::collections::{HashMap, HashSet};
+use std::io::Write;
 use crate::execution_data::AExpressionSlice;
 use crate::execution_data::TagInfo;
 
@@ -185,7 +186,43 @@ impl ExecutedTemplate {
         self.number_of_components += dimensions.iter().fold(1, |p, c| p * (*c));
     }
 
-    pub fn add_constraint(&mut self, constraint: Constraint) {
+    pub fn add_constraint(
+        &mut self,
+        constraint: Constraint,
+        filename: &str,
+        line_num: usize,
+        line: &str,
+        callstack: &[String],
+    ) {
+        // debug constraints
+        if let Ok(outfile) = std::env::var("ZKSEC_CONSTRAINTS") {
+            let mut res = "{ ".to_string();
+            res.push_str(&format!("\"callstack\": \"{}\", ", callstack.join(" > ")));
+            let filename = filename.trim_matches('"');
+            res.push_str(&format!(
+                "\"filename\": \"{filename}:{}:{}\", ",
+                self.code.meta().start,
+                self.code.meta().end
+            ));
+            res.push_str(&format!("\"line_num\": {}, ", line_num));
+            res.push_str(&format!("\"line\": \"{}\", ", line));
+            res.push_str(&format!(
+                "\"constraint\": \"{}\"",
+                constraint.pretty(&self.template_name)
+            ));
+            res.push_str(" }");
+
+            if outfile == "" {
+                println!("{res}");
+            }
+
+            // write to file
+            let mut file =
+                std::fs::OpenOptions::new().append(true).create(true).open(outfile).unwrap();
+            file.write_all(res.as_bytes()).unwrap();
+            file.write_all(b"\n").unwrap();
+        }
+
         self.constraints.push(constraint);
     }
 
