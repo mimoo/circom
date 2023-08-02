@@ -336,7 +336,6 @@ fn execute_statement(
                                 let ctr = AExpr::transform_expression_to_constraint_form(expr, &p)
                                     .unwrap();
 
-                                // compute line number based on meta.start in file.source()
                                 let file = program_archive
                                     .file_library
                                     .files
@@ -344,10 +343,11 @@ fn execute_statement(
                                     .unwrap();
                                 let line_num = find_exact_line(file.source(), meta.start);
                                 let line = &file.source()[meta.start..meta.end];
-
+                                let filename = file.name().trim_matches('"');
+                                let filename = &format!("{filename}:{}:{}", meta.start, meta.end);
                                 node.add_constraint(
                                     ctr,
-                                    file.name(),
+                                    filename,
                                     line_num,
                                     line,
                                     &runtime.call_trace,
@@ -443,10 +443,11 @@ fn execute_statement(
                         program_archive.file_library.files.get(runtime.current_file).unwrap();
                     let line_num = find_exact_line(file.source(), meta.start);
                     let line = &file.source()[meta.start..meta.end];
-
+                    let filename = file.name().trim_matches('"');
+                    let filename = &format!("{filename}:{}:{}", meta.start, meta.end);
                     node.add_constraint(
                         constraint_expression,
-                        file.name(),
+                        filename,
                         line_num,
                         line,
                         &runtime.call_trace,

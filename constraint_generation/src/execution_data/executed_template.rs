@@ -198,12 +198,7 @@ impl ExecutedTemplate {
         if let Ok(outfile) = std::env::var("ZKSEC_CONSTRAINTS") {
             let mut res = "{ ".to_string();
             res.push_str(&format!("\"callstack\": \"{}\", ", callstack.join(" > ")));
-            let filename = filename.trim_matches('"');
-            res.push_str(&format!(
-                "\"filename\": \"{filename}:{}:{}\", ",
-                self.code.meta().start,
-                self.code.meta().end
-            ));
+            res.push_str(&format!("\"filename\": \"{filename}\", "));
             res.push_str(&format!("\"line_num\": {}, ", line_num));
             res.push_str(&format!("\"line\": \"{}\", ", line));
             res.push_str(&format!(
