@@ -8,10 +8,9 @@ use input_user::Input;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-pub fn start() -> Result<(), ()> {
+pub fn start(user_input: Input) -> Result<(), ()> {
     use compilation_user::CompilerConfig;
     use execution_user::ExecutionConfig;
-    let user_input = Input::new()?;
     let mut program_archive = parser_user::parse_project(&user_input)?;
     type_analysis_user::analyse_project(&mut program_archive)?;
 
