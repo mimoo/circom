@@ -56,7 +56,17 @@ impl PreExecutedTemplate {
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
-pub static ZKSEC: Lazy<Mutex<Vec<String>>> = Lazy::new(|| {
+#[derive(Clone)]
+pub struct ConstraintAnalaysis {
+    pub stmt_num: usize,
+    pub callstack: Vec<String>,
+    pub filename: String,
+    pub line_num: usize,
+    pub line: String,
+    pub constraint: String,
+}
+
+pub static ZKSEC_CONSTRAINTS: Lazy<Mutex<Vec<ConstraintAnalaysis>>> = Lazy::new(|| {
     let res = vec![];
     Mutex::new(res)
 });
@@ -202,29 +212,18 @@ impl ExecutedTemplate {
         line: &str,
         callstack: &[String],
     ) {
-        // debug constraints
-        //        if let Ok(outfile) = std::env::var("ZKSEC_CONSTRAINTS") {
-        let mut res = "{ ".to_string();
-        res.push_str(&format!("\"callstack\": \"{}\", ", callstack.join(" > ")));
-        res.push_str(&format!("\"filename\": \"{filename}\", "));
-        res.push_str(&format!("\"line_num\": {}, ", line_num));
-        res.push_str(&format!("\"line\": \"{}\", ", line));
-        res.push_str(&format!("\"constraint\": \"{}\"", constraint.pretty(&self.template_name)));
-        res.push_str(" }");
-
-        // if outfile == "" {
-        //     println!("{res}");
-        // }
-
-        // write to file
-        let mut thing = ZKSEC.lock().unwrap();
-        thing.push(res);
-
-        // let outfile = "/tmp/here.json";
-        // let mut file = std::fs::OpenOptions::new().append(true).create(true).open(outfile).unwrap();
-        // file.write_all(res.as_bytes()).unwrap();
-        // file.write_all(b"\n").unwrap();
-        //        }
+        {
+            let stmt_num = ZKSEC_CONSTRAINTS.lock().unwrap().len();
+            let constraint_analysis = ConstraintAnalaysis {
+                stmt_num,
+                callstack: callstack.to_vec(),
+                filename: filename.to_string(),
+                line_num,
+                line: line.to_string(),
+                constraint: constraint.pretty(&self.template_name),
+            };
+            ZKSEC_CONSTRAINTS.lock().unwrap().push(constraint_analysis);
+        }
 
         self.constraints.push(constraint);
     }

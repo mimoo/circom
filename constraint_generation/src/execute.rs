@@ -30,6 +30,11 @@ enum BlockType {
     Unknown,
 }
 
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+pub static STMT: Lazy<Mutex<Vec<(usize, usize)>>> = Lazy::new(|| Mutex::new(vec![]));
+
 fn find_exact_line(source: &str, start: usize) -> usize {
     let mut line_number = 1;
     for (i, c) in source.chars().enumerate() {
@@ -195,6 +200,11 @@ fn execute_statement(
     actual_node: &mut Option<ExecutedTemplate>,
     flags: FlagsExecution,
 ) -> Result<(Option<FoldedValue>, bool), ()> {
+    // zksec
+    {
+        let meta = stmt.meta();
+        STMT.lock().unwrap().push((meta.start, meta.end));
+    }
     use Statement::*;
     let id = stmt.get_meta().elem_id;
     Analysis::reached(&mut runtime.analysis, id);

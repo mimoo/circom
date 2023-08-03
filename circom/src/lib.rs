@@ -6,6 +6,7 @@ pub mod type_analysis_user;
 
 use std::path::PathBuf;
 
+use constraint_generation::execution_data::executed_template::ConstraintAnalaysis;
 use input_user::Input;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -16,11 +17,25 @@ pub fn write_file(path: PathBuf, src: String) {
 
 pub fn reset() {
     parser::FILES.lock().unwrap().clear();
-    constraint_generation::execution_data::executed_template::ZKSEC.lock().unwrap().clear()
+    constraint_generation::execution_data::executed_template::ZKSEC_CONSTRAINTS
+        .lock()
+        .unwrap()
+        .clear();
+    constraint_generation::execute::STMT.lock().unwrap().clear();
 }
 
-pub fn get_analysis() -> Vec<String> {
-    constraint_generation::execution_data::executed_template::ZKSEC.lock().unwrap().clone()
+pub struct Analysis {
+    pub constraints: Vec<ConstraintAnalaysis>,
+    pub timeline: Vec<(usize, usize)>,
+}
+
+pub fn get_analysis() -> Analysis {
+    let constraints = constraint_generation::execution_data::executed_template::ZKSEC_CONSTRAINTS
+        .lock()
+        .unwrap()
+        .clone();
+    let timeline = constraint_generation::execute::STMT.lock().unwrap().clone();
+    Analysis { constraints, timeline }
 }
 
 pub fn start(user_input: Input) -> Result<(), ()> {
