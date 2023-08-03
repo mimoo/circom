@@ -56,7 +56,7 @@ impl PreExecutedTemplate {
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
-#[derive(Clone)]
+#[derive(Clone, serde::Serialize)]
 pub struct ConstraintAnalaysis {
     pub stmt_num: usize,
     pub callstack: Vec<String>,

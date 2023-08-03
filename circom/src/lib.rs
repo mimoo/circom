@@ -24,6 +24,7 @@ pub fn reset() {
     constraint_generation::execute::STMT.lock().unwrap().clear();
 }
 
+#[derive(Clone, serde::Serialize)]
 pub struct Analysis {
     pub constraints: Vec<ConstraintAnalaysis>,
     pub timeline: Vec<(usize, usize)>,
