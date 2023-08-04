@@ -213,7 +213,7 @@ impl ExecutedTemplate {
         callstack: &[String],
     ) {
         {
-            let stmt_num = ZKSEC_CONSTRAINTS.lock().unwrap().len();
+            let stmt_num = crate::execute::STMT.lock().unwrap().len();
             let constraint_analysis = ConstraintAnalaysis {
                 stmt_num,
                 callstack: callstack.to_vec(),
