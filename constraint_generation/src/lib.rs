@@ -3,8 +3,8 @@ extern crate num_traits;
 
 mod compute_constants;
 mod environment_utils;
-mod execute;
-mod execution_data;
+pub mod execute;
+pub mod execution_data;
 
 use ansi_term::Colour;
 use circom_algebra::algebra::{ArithmeticError, ArithmeticExpression};
@@ -40,7 +40,7 @@ pub struct FlagsExecution {
 }
 
 pub type ConstraintWriter = Box<dyn ConstraintExporter>;
-type BuildResponse = Result<(ConstraintWriter, VCP), ()>;
+type BuildResponse = Result<(), ()>;
 pub fn build_circuit(program: ProgramArchive, config: BuildConfig) -> BuildResponse {
     let files = program.file_library.clone();
     let flags =
@@ -48,20 +48,23 @@ pub fn build_circuit(program: ProgramArchive, config: BuildConfig) -> BuildRespo
     let (exe, warnings) = instantiation(&program, flags, &config.prime).map_err(|r| {
         Report::print_reports(&r, &files);
     })?;
-    Report::print_reports(&warnings, &files);
-    let (mut dag, mut vcp, warnings) = export(exe, program, flags).map_err(|r| {
-        Report::print_reports(&r, &files);
-    })?;
-    if config.inspect_constraints {
-        Report::print_reports(&warnings, &files);
-    }
-    if config.flag_f {
-        sync_dag_and_vcp(&mut vcp, &mut dag);
-        Result::Ok((Box::new(dag), vcp))
-    } else {
-        let list = simplification_process(&mut vcp, dag, &config);
-        Result::Ok((Box::new(list), vcp))
-    }
+    Ok(())
+    // Report::print_reports(&warnings, &files);
+    // let (mut dag, mut vcp, warnings) = export(exe, program, flags).map_err(|r| {
+    //     Report::print_reports(&r, &files);
+    // })?;
+    // if config.inspect_constraints {
+    //     Report::print_reports(&warnings, &files);
+    // }
+    // if config.flag_f {
+    //     println!("NOT Simplifying constraints...");
+    //     sync_dag_and_vcp(&mut vcp, &mut dag);
+    //     Result::Ok((Box::new(dag), vcp))
+    // } else {
+    //     println!("Simplifying constraints...");
+    //     let list = simplification_process(&mut vcp, dag, &config);
+    //     Result::Ok((Box::new(list), vcp))
+    // }
 }
 
 type InstantiationResponse = Result<(ExecutedProgram, ReportCollection), ReportCollection>;

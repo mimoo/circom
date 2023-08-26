@@ -5,6 +5,7 @@ use dag::DAG;
 use num_bigint::BigInt;
 use program_structure::ast::{SignalType, Statement};
 use std::collections::{HashMap, HashSet};
+use std::io::Write;
 use crate::execution_data::AExpressionSlice;
 use crate::execution_data::TagInfo;
 
@@ -51,6 +52,24 @@ impl PreExecutedTemplate {
         &self.outputs
     }
 }
+
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+#[derive(Clone, serde::Serialize)]
+pub struct ConstraintAnalaysis {
+    pub stmt_num: usize,
+    pub callstack: Vec<String>,
+    pub filename: String,
+    pub line_num: usize,
+    pub line: String,
+    pub constraint: String,
+}
+
+pub static ZKSEC_CONSTRAINTS: Lazy<Mutex<Vec<ConstraintAnalaysis>>> = Lazy::new(|| {
+    let res = vec![];
+    Mutex::new(res)
+});
 
 pub struct ExecutedTemplate {
     pub code: Statement,
@@ -185,7 +204,27 @@ impl ExecutedTemplate {
         self.number_of_components += dimensions.iter().fold(1, |p, c| p * (*c));
     }
 
-    pub fn add_constraint(&mut self, constraint: Constraint) {
+    pub fn add_constraint(
+        &mut self,
+        constraint: Constraint,
+        filename: &str,
+        line_num: usize,
+        line: &str,
+        callstack: &[String],
+    ) {
+        {
+            let stmt_num = crate::execute::STMT.lock().unwrap().len();
+            let constraint_analysis = ConstraintAnalaysis {
+                stmt_num,
+                callstack: callstack.to_vec(),
+                filename: filename.to_string(),
+                line_num,
+                line: line.to_string(),
+                constraint: constraint.pretty(&self.template_name),
+            };
+            ZKSEC_CONSTRAINTS.lock().unwrap().push(constraint_analysis);
+        }
+
         self.constraints.push(constraint);
     }
 

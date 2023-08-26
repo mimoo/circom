@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct Input {
     pub input_program: PathBuf,
     pub out_r1cs: PathBuf,

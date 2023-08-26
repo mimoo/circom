@@ -22,10 +22,7 @@ pub struct ExecutionConfig {
     pub prime: String,
 }
 
-pub fn execute_project(
-    program_archive: ProgramArchive,
-    config: ExecutionConfig,
-) -> Result<VCP, ()> {
+pub fn execute_project(program_archive: ProgramArchive, config: ExecutionConfig) -> Result<(), ()> {
     use constraint_generation::{build_circuit, BuildConfig};
     let debug = DebugWriter::new(config.json_constraints).unwrap();
     let build_config = BuildConfig {
@@ -40,17 +37,17 @@ pub fn execute_project(
         prime: config.prime,
     };
     let custom_gates = program_archive.custom_gates;
-    let (exporter, vcp) = build_circuit(program_archive, build_config)?;
-    if config.r1cs_flag {
-        generate_output_r1cs(&config.r1cs, exporter.as_ref(), custom_gates)?;
-    }
-    if config.sym_flag {
-        generate_output_sym(&config.sym, exporter.as_ref())?;
-    }
-    if config.json_constraint_flag {
-        generate_json_constraints(&debug, exporter.as_ref())?;
-    }
-    Result::Ok(vcp)
+    let _ = build_circuit(program_archive, build_config)?;
+    // if config.r1cs_flag {
+    //     generate_output_r1cs(&config.r1cs, exporter.as_ref(), custom_gates)?;
+    // }
+    // if config.sym_flag {
+    //     generate_output_sym(&config.sym, exporter.as_ref())?;
+    // }
+    // if config.json_constraint_flag {
+    //     generate_json_constraints(&debug, exporter.as_ref())?;
+    // }
+    Result::Ok(())
 }
 
 fn generate_output_r1cs(

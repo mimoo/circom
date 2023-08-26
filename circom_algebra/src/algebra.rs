@@ -1,10 +1,11 @@
 use super::modular_arithmetic;
 pub use super::modular_arithmetic::ArithmeticError;
 use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
+use num_traits::{ToPrimitive, Zero, One};
 use std::collections::{HashMap, HashSet, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
+use std::str::FromStr;
 
 pub enum ArithmeticExpression<C>
 where
@@ -998,7 +999,7 @@ impl Substitution<usize> {
     Represents a constraint of the form: A*B - C = 0
     where A,B and C are linear expression.
 */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Constraint<C>
 where
     C: Hash + Eq,
@@ -1008,7 +1009,97 @@ where
     pub(crate) c: HashMap<C, BigInt>,
 }
 
+use once_cell::sync::Lazy;
+
+// Note that this uses the default specific prime field
+static CONSTANTS: Lazy<HashMap<BigInt, String>> = Lazy::new(|| {
+    let mut constants = HashMap::new();
+    // 1
+    constants.insert(BigInt::one(), "1".to_string());
+    let two = BigInt::from(2);
+    // 2
+    constants.insert(two.clone(), "2".to_string());
+    let p = BigInt::from_str(
+        "21888242871839275222246405745257275088548364400416034343698204186575808495617",
+    )
+    .unwrap();
+    // -1
+    let minus_one = p.clone() - BigInt::one();
+    constants.insert(minus_one.clone(), "- 1".to_string());
+    // -2
+    let minus_two = p.clone() - two.clone();
+    constants.insert(minus_two.clone(), "- 2".to_string());
+    let mut last = two.clone();
+
+    for i in 2..128 {
+        last *= two.clone();
+
+        // 2^i
+        constants.insert(last.clone(), format!("2^{i}"));
+
+        // -2^i
+        let negative = p.clone() - last.clone();
+        constants.insert(negative, format!("- 2^{i}"));
+
+        // 1/2^i
+        // TODO: let inv =
+
+        // -1/2^i
+        // TODO: let negative_inv =
+    }
+    constants
+});
+
+fn pretty_row<C>(row: &HashMap<C, BigInt>, template_name: &str) -> String
+where
+    C: Default + Eq + Display,
+{
+    // just one value of nothing means that the whole row is set to 0
+    if row.len() == 1 && row.values().next().unwrap().is_zero() {
+        return "0".to_string();
+    }
+
+    // linear combination
+    let mut res = String::new();
+    for (symbol, val) in row {
+        // skip dummy value
+        if symbol == &C::default() && val.is_zero() {
+            continue;
+        }
+
+        let val = CONSTANTS.get(val).cloned().unwrap_or_else(|| val.to_string());
+
+        if res.len() > 1 && !val.starts_with('-') {
+            res.push_str("+ ");
+        }
+        if symbol == &C::default() {
+            res.push_str(&format!("{val} "));
+        } else if val == "1" {
+            res.push_str(&format!("{template_name}.{symbol} "));
+        } else {
+            res.push_str(&format!("{val} * {template_name}.{symbol} "));
+        }
+    }
+    res
+}
+
 impl<C: Default + Clone + Display + Hash + Eq> Constraint<C> {
+    pub fn pretty(&self, template_name: &str) -> String {
+        // prettify each matrix
+        let a = pretty_row(&self.a, template_name);
+        let b = pretty_row(&self.b, template_name);
+        let c = pretty_row(&self.c, template_name);
+
+        // format the constraint
+        if c == "0" {
+            format!("({})*({}) = 0", a, b)
+        } else if a == "0" && b == "0" {
+            format!("{c} = 0")
+        } else {
+            format!("({a})*({b}) = {c}")
+        }
+    }
+
     fn new(a: HashMap<C, BigInt>, b: HashMap<C, BigInt>, c: HashMap<C, BigInt>) -> Constraint<C> {
         Constraint { a, b, c }
     }

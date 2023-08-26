@@ -446,7 +446,7 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
     use super::non_linear_utils::obtain_and_simplify_non_linear;
     use circom_algebra::simplification_utils::build_encoded_fast_substitutions;
     use circom_algebra::simplification_utils::fast_encoded_constraint_substitution;
-    use std::time::SystemTime;
+    //use std::time::SystemTime;
 
     let mut substitution_log =
         if smp.port_substitution { Some(SubstitutionJSON::new(SUB_LOG).unwrap()) } else { None };
@@ -466,20 +466,20 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
 
     let relevant_signals = {
         // println!("Creating first relevant set");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let mut relevant = HashSet::new();
         let iter = EncodingIterator::new(&smp.dag_encoding);
         let s_sub = HashMap::with_capacity(0);
         let c_sub = HashMap::with_capacity(0);
         build_relevant_set(iter, &mut relevant, &s_sub, &c_sub);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("First relevant set created: {} ms", dur);
         relevant
     };
 
     let single_substitutions = {
         // println!("Start of single assignment simplification");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let (subs, mut cons) = eq_simplification(
             equalities,
             Arc::clone(&forbidden),
@@ -504,14 +504,14 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
             deleted.insert(signal);
         }
         remove_not_relevant(&mut substitutions, &relevant_signals);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("End of single assignment simplification: {} ms", dur);
         substitutions
     };
 
     let cons_substitutions = {
         // println!("Start of constant assignment simplification");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let (subs, mut cons) =
             constant_eq_simplification(cons_equalities, &forbidden, &field, &mut substitution_log);
         LinkedList::append(&mut lconst, &mut cons);
@@ -524,24 +524,24 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
         for signal in substitutions.keys().cloned() {
             deleted.insert(signal);
         }
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("End of constant assignment simplification: {} ms", dur);
         substitutions
     };
 
     let relevant_signals = {
         // println!("Start building relevant");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let mut relevant = HashSet::new();
         let iter = EncodingIterator::new(&smp.dag_encoding);
         build_relevant_set(iter, &mut relevant, &single_substitutions, &cons_substitutions);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("Relevant built: {} ms", dur);
         relevant
     };
 
     let linear_substitutions = if apply_linear {
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let (subs, mut cons) = linear_simplification(
             &mut substitution_log,
             linear,
@@ -551,7 +551,7 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
             use_old_heuristics,
         );
         // println!("Building substitution map");
-        let now0 = SystemTime::now();
+        //let now0 = SystemTime::now();
         let mut only_relevant = LinkedList::new();
         for substitution in subs {
             deleted.insert(*substitution.from());
@@ -560,9 +560,9 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
             }
         }
         let substitutions = build_encoded_fast_substitutions(only_relevant);
-        let _dur0 = now0.elapsed().unwrap().as_millis();
+        //let _dur0 = now0.elapsed().unwrap().as_millis();
         // println!("End of substitution map: {} ms", dur0);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("End of cluster simplification: {} ms", dur);
         LinkedList::append(&mut lconst, &mut cons);
         for constraint in &mut lconst {
@@ -578,7 +578,7 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
 
     let (with_linear, mut constraint_storage) = {
         // println!("Building constraint storage");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let mut frames = LinkedList::new();
         LinkedList::push_back(&mut frames, single_substitutions);
         LinkedList::push_back(&mut frames, cons_substitutions);
@@ -587,7 +587,7 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
         let mut storage = ConstraintStorage::new();
         let with_linear = obtain_and_simplify_non_linear(iter, &mut storage, &frames, &field);
         crate::state_utils::empty_encoding_constraints(&mut smp.dag_encoding);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("Storages built in {} ms", dur);
         no_rounds -= 1;
         (with_linear, storage)
@@ -599,16 +599,16 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
     let mut apply_round = apply_linear && no_rounds > 0 && !linear.is_empty();
     let mut non_linear_map = if apply_round || remove_unused {
         // println!("Building non-linear map");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let non_linear_map = build_non_linear_signal_map(&constraint_storage);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("Non-linear was built in {} ms", dur);
         non_linear_map
     } else {
         SignalToConstraints::with_capacity(0)
     };
     while apply_round {
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         // println!("Number of linear constraints: {}", linear.len());
         let (substitutions, mut constants) = linear_simplification(
             &mut substitution_log,
@@ -638,7 +638,7 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
         round_id += 1;
         no_rounds -= 1;
         apply_round = !linear.is_empty() && no_rounds > 0;
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("Iteration no {} took {} ms", round_id, dur);
     }
 
@@ -690,10 +690,10 @@ pub fn simplification(smp: &mut Simplifier) -> (ConstraintStorage, SignalMap) {
 
     let signal_map = {
         // println!("Rebuild witness");
-        let now = SystemTime::now();
+        //let now = SystemTime::now();
         let signal_map =
             rebuild_witness(max_signal, deleted, &forbidden, non_linear_map, remove_unused);
-        let _dur = now.elapsed().unwrap().as_millis();
+        //let _dur = now.elapsed().unwrap().as_millis();
         // println!("End of rebuild witness: {} ms", dur);
         signal_map
     };

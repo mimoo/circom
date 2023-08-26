@@ -188,12 +188,30 @@ fn produce_report_with_main_components(
     r
 }
 
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+use std::collections::HashMap;
+
+pub static FILES: Lazy<Mutex<HashMap<PathBuf, String>>> = Lazy::new(|| {
+    let m = HashMap::new();
+    Mutex::new(m)
+});
+
 fn open_file(path: PathBuf) -> Result<(String, String), Report> /* path, src */ {
-    use std::fs::read_to_string;
     let path_str = format!("{:?}", path);
-    read_to_string(path)
-        .map(|contents| (path_str.clone(), contents))
-        .map_err(|_| produce_report_with_message(ReportCode::FileOs, path_str.clone()))
+    let res = FILES
+        .lock()
+        .unwrap()
+        .get(&path)
+        .map(|src| (path_str.clone(), src.clone()))
+        .unwrap_or_else(|| panic!("File not found: {}", &path_str));
+
+    Ok(res)
+    // use std::fs::read_to_string;
+    // let path_str = format!("{:?}", path);
+    // read_to_string(path)
+    //     .map(|contents| (path_str.clone(), contents))
+    //     .map_err(|_| produce_report_with_message(ReportCode::FileOs, path_str.clone()))
 }
 
 fn parse_number_version(version: &str) -> Version {

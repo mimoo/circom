@@ -1,7 +1,7 @@
 [package]
 name = "constraint_generation"
 version = "2.1.6"
-authors = ["Costa Group UCM","iden3"]
+authors = ["Costa Group UCM", "iden3"]
 edition = "2018"
 
 [dependencies]
@@ -14,3 +14,5 @@ program_structure = { path = "../program_structure" }
 constraint_writers = { path = "../constraint_writers" }
 constraint_list = { path = "../constraint_list" }
 dag = { path = "../dag" }
+once_cell = "1.18.0"
+serde = { version = "1.0.82", features = ["derive"] }
