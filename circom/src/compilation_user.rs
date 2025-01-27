@@ -6,7 +6,6 @@ use program_structure::error_code::ReportCode;
 use program_structure::file_definition::FileLibrary;
 use crate::VERSION;
 
-
 pub struct CompilerConfig {
     pub js_folder: String,
     pub wasm_name: String,
@@ -26,22 +25,47 @@ pub struct CompilerConfig {
 }
 
 pub fn compile(config: CompilerConfig) -> Result<(), ()> {
-
-
-    if config.c_flag || config.wat_flag || config.wasm_flag{
+    if config.c_flag || config.wat_flag || config.wasm_flag {
         let circuit = compiler_interface::run_compiler(
             config.vcp,
-            Config { 
-                debug_output: config.debug_output, 
-                produce_input_log: config.produce_input_log, 
+            Config {
+                debug_output: config.debug_output,
+                produce_input_log: config.produce_input_log,
                 wat_flag: config.wat_flag,
                 constraint_assert_dissabled_flag: config.constraint_assert_dissabled_flag,
             },
-            VERSION
+            VERSION,
         )?;
-    
+        let zkai_bugs = std::env::var("ZKAI_BUGS").unwrap_or("false".to_string());
+        if zkai_bugs == "true" || zkai_bugs == "1" {
+            println!("templates:");
+            for template in &circuit.templates {
+                if template.name == "BigIntIsZeroModP" {
+                    println!(
+                        "{id}:{header}{name}",
+                        id = template.id,
+                        header = template.header,
+                        name = template.name
+                    );
+                }
+            }
+            println!("functions:");
+            for function in &circuit.functions {
+                if function.name == "reduce_overflow_signed_dl" {
+                    println!("{header}{name}", header = function.header, name = function.name);
+                }
+            }
+            return Ok(());
+        }
+
         if config.c_flag {
-            compiler_interface::write_c(&circuit, &config.c_folder, &config.c_run_name, &config.c_file, &config.dat_file)?;
+            compiler_interface::write_c(
+                &circuit,
+                &config.c_folder,
+                &config.c_run_name,
+                &config.c_file,
+                &config.dat_file,
+            )?;
             println!(
                 "{} {} and {}",
                 Colour::Green.paint("Written successfully:"),
@@ -51,7 +75,7 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
             println!(
                 "{} {}/{}, {}, {}, {}, {}, {}, {} and {}",
                 Colour::Green.paint("Written successfully:"),
-            &config.c_folder,
+                &config.c_folder,
                 "main.cpp".to_string(),
                 "circom.hpp".to_string(),
                 "calcwit.hpp".to_string(),
@@ -62,10 +86,15 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
                 "Makefile".to_string()
             );
         }
-    
+
         match (config.wat_flag, config.wasm_flag) {
             (true, true) => {
-                compiler_interface::write_wasm(&circuit, &config.js_folder, &config.wasm_name, &config.wat_file)?;
+                compiler_interface::write_wasm(
+                    &circuit,
+                    &config.js_folder,
+                    &config.wasm_name,
+                    &config.wat_file,
+                )?;
                 println!("{} {}", Colour::Green.paint("Written successfully:"), config.wat_file);
                 let result = wat_to_wasm(&config.wat_file, &config.wasm_file);
                 match result {
@@ -74,12 +103,21 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
                         return Err(());
                     }
                     Result::Ok(()) => {
-                        println!("{} {}", Colour::Green.paint("Written successfully:"), config.wasm_file);
+                        println!(
+                            "{} {}",
+                            Colour::Green.paint("Written successfully:"),
+                            config.wasm_file
+                        );
                     }
                 }
             }
             (false, true) => {
-                compiler_interface::write_wasm(&circuit,  &config.js_folder, &config.wasm_name, &config.wat_file)?;
+                compiler_interface::write_wasm(
+                    &circuit,
+                    &config.js_folder,
+                    &config.wasm_name,
+                    &config.wat_file,
+                )?;
                 let result = wat_to_wasm(&config.wat_file, &config.wasm_file);
                 std::fs::remove_file(&config.wat_file).unwrap();
                 match result {
@@ -88,22 +126,29 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
                         return Err(());
                     }
                     Result::Ok(()) => {
-                        println!("{} {}", Colour::Green.paint("Written successfully:"), config.wasm_file);
+                        println!(
+                            "{} {}",
+                            Colour::Green.paint("Written successfully:"),
+                            config.wasm_file
+                        );
                     }
                 }
             }
             (true, false) => {
-                compiler_interface::write_wasm(&circuit,  &config.js_folder, &config.wasm_name, &config.wat_file)?;
+                compiler_interface::write_wasm(
+                    &circuit,
+                    &config.js_folder,
+                    &config.wasm_name,
+                    &config.wat_file,
+                )?;
                 println!("{} {}", Colour::Green.paint("Written successfully:"), config.wat_file);
             }
             (false, false) => {}
         }
     }
-    
 
     Ok(())
 }
-
 
 fn wat_to_wasm(wat_file: &str, wasm_file: &str) -> Result<(), Report> {
     use std::fs::read_to_string;
