@@ -40,7 +40,7 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
         if zkai_bugs == "true" || zkai_bugs == "1" {
             println!("templates:");
             for template in &circuit.templates {
-                if template.name == "BigIntIsZeroModP" {
+                if true {
                     println!(
                         "{id}:{header}{name}",
                         id = template.id,
@@ -51,11 +51,13 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
             }
             println!("functions:");
             for function in &circuit.functions {
-                if function.name == "reduce_overflow_signed_dl" {
+                if true {
                     println!("{header}{name}", header = function.header, name = function.name);
                 }
             }
             return Ok(());
+        } else {
+            println!("not debugging");
         }
 
         if config.c_flag {
