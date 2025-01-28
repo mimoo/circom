@@ -35,7 +35,7 @@ fn start() -> Result<(), ()> {
     if zkai_bugs != "false" {
         let mut files_ids = std::collections::HashSet::new();
         let mut relevant_files = std::collections::HashMap::new();
-        for (_name, function) in &program_archive.functions {
+        for (_fn_name, function) in &program_archive.functions {
             let file_id = function.get_file_id();
             if files_ids.insert(file_id) {
                 continue;
@@ -45,10 +45,10 @@ fn start() -> Result<(), ()> {
                 program_archive.file_library.get_files().get(function.get_file_id()).unwrap();
             let name = file.name();
             let source = file.source();
-            //println!(" -> {}:{}", name, source);
-            relevant_files.insert(name.to_string(), source.to_string());
+            //println!(" -> {}:{}", name, _fn_name);
+            relevant_files.insert(name.trim_matches('"').to_string(), source.to_string());
         }
-        for (_name, template) in &program_archive.templates {
+        for (_template_name, template) in &program_archive.templates {
             let file_id = template.get_file_id();
             if files_ids.insert(file_id) {
                 continue;
@@ -58,8 +58,8 @@ fn start() -> Result<(), ()> {
                 program_archive.file_library.get_files().get(template.get_file_id()).unwrap();
             let name = file.name();
             let source = file.source();
-            //println!(" -> {}:{}", name, source);
-            relevant_files.insert(name.to_string(), source.to_string());
+            //println!(" -> {}:{}", name, name2);
+            relevant_files.insert(name.trim_matches('"').to_string(), source.to_string());
         }
         // print to file
         serde_json::to_writer(
