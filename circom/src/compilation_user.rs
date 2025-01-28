@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use ansi_term::Colour;
 use compiler::compiler_interface;
 use compiler::compiler_interface::{Config, VCP};
@@ -25,6 +27,45 @@ pub struct CompilerConfig {
     pub vcp: VCP,
 }
 
+fn export_calls_from_inst(
+    instructions: &compiler::intermediate_representation::InstructionList,
+) -> HashSet<String> {
+    let mut instructions = instructions.to_vec();
+    let mut calls = HashSet::new();
+    while instructions.len() > 0 {
+        let inst = instructions.pop().unwrap();
+        match *inst {
+            Instruction::Call(c) => {
+                calls.insert(format!(
+                    "fn:{symbol}:{message_id}",
+                    symbol = c.symbol,
+                    message_id = c.message_id
+                ));
+            }
+            Instruction::CreateCmp(c) => {
+                calls.insert(format!("cmp:{}", c.template_id));
+            }
+            Instruction::Branch(b) => {
+                instructions.push(b.cond);
+                instructions.extend(b.if_branch);
+                instructions.extend(b.else_branch);
+            }
+            Instruction::Loop(l) => {
+                instructions.push(l.continue_condition);
+                instructions.extend(l.body);
+            }
+            Instruction::CreateCmp(c) => {
+                instructions.push(c.sub_cmp_id);
+            }
+            Instruction::Compute(c) => {
+                instructions.extend(c.stack);
+            }
+            _ => continue,
+        }
+    }
+    return calls;
+}
+
 pub fn compile(config: CompilerConfig) -> Result<(), ()> {
     println!("compiling");
     let zkai_bugs = std::env::var("ZKAI_BUGS").unwrap_or("false".to_string());
@@ -44,29 +85,13 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
         println!("Time elapsed in building the circuit is: {:?}", duration);
 
         if zkai_bugs != "false" {
-            // let mut template_seens = std::collections::HashSet::new();
             let mut templates_ids = std::collections::HashMap::new();
             let mut templates_calls = std::collections::HashMap::new();
             for t in &circuit.templates {
-                let mut calls = std::collections::HashSet::new();
-                for inst in &t.body {
-                    match (*inst).as_ref() {
-                        Instruction::Call(c) => {
-                            calls.insert(format!("fn:{}", c.symbol));
-                        }
-                        Instruction::CreateCmp(c) => {
-                            calls.insert(format!("cmp:{}", c.template_id));
-                        }
-                        _ => continue,
-                    }
-                }
-                // if template_seens.insert(t.name.clone()) {
-                //     panic!("template {} seen twice", t.name);
-                // }
+                let calls = export_calls_from_inst(&t.body);
                 templates_ids.insert(t.id, t.name.clone());
                 templates_calls.insert(t.id, calls);
             }
-
             serde_json::to_writer(
                 std::fs::File::create("templates_calls.json").unwrap(),
                 &templates_calls,
@@ -77,40 +102,16 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
                 &templates_ids,
             )
             .unwrap();
-
             let mut functions_calls = std::collections::HashMap::new();
             for function in &circuit.functions {
-                let mut calls = std::collections::HashSet::new();
-                for inst in &function.body {
-                    match (*inst).as_ref() {
-                        Instruction::Call(c) => {
-                            //println!("call: {}", c.symbol);
-                            calls.insert(format!(
-                                "fn:{symbol}:{message_id}",
-                                symbol = c.symbol,
-                                message_id = c.message_id
-                            ));
-                        }
-                        Instruction::CreateCmp(c) => {
-                            calls.insert(format!("cmp:{}", c.template_id));
-                            println!(
-                                "{header}:{name}",
-                                header = function.header,
-                                name = function.name
-                            );
-                        }
-                        _ => continue,
-                    }
-                }
+                let calls = export_calls_from_inst(&function.body);
                 functions_calls.insert(function.name.clone(), calls);
             }
-
             serde_json::to_writer(
                 std::fs::File::create("functions_calls.json").unwrap(),
                 &functions_calls,
             )
             .unwrap();
-
             return Ok(());
         } else {
             println!("not debugging");
