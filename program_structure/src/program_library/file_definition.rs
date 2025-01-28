@@ -34,7 +34,7 @@ impl FileLibrary {
     pub fn to_storage(&self) -> &FileStorage {
         &self.get_files()
     }
-    fn get_files(&self) -> &FileStorage {
+    pub fn get_files(&self) -> &FileStorage {
         &self.files
     }
     fn get_mut_files(&mut self) -> &mut FileStorage {
