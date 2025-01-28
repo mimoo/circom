@@ -44,6 +44,7 @@ fn export_calls_from_inst(
             }
             Instruction::CreateCmp(c) => {
                 calls.insert(format!("cmp:{}", c.template_id));
+                instructions.push(c.sub_cmp_id);
             }
             Instruction::Branch(b) => {
                 instructions.push(b.cond);
@@ -53,9 +54,6 @@ fn export_calls_from_inst(
             Instruction::Loop(l) => {
                 instructions.push(l.continue_condition);
                 instructions.extend(l.body);
-            }
-            Instruction::CreateCmp(c) => {
-                instructions.push(c.sub_cmp_id);
             }
             Instruction::Compute(c) => {
                 instructions.extend(c.stack);
