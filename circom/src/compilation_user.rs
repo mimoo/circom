@@ -46,6 +46,9 @@ fn export_calls_from_inst(
                 calls.insert(format!("cmp:{}", c.template_id));
                 instructions.push(c.sub_cmp_id);
             }
+            Instruction::Store(s) => {
+                instructions.push(s.src);
+            }
             Instruction::Branch(b) => {
                 instructions.push(b.cond);
                 instructions.extend(b.if_branch);

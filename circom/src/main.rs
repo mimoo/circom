@@ -34,37 +34,49 @@ fn start() -> Result<(), ()> {
     let zkai_bugs = std::env::var("ZKAI_BUGS").unwrap_or("false".to_string());
     if zkai_bugs != "false" {
         let mut files_ids = std::collections::HashSet::new();
+        files_ids.insert(*program_archive.get_file_id_main());
         let mut relevant_files = std::collections::HashMap::new();
-        for (_fn_name, function) in &program_archive.functions {
-            let file_id = function.get_file_id();
-            if files_ids.insert(file_id) {
-                continue;
-            }
-            //            println!("{name}:{}:{}", function.get_name(), function.get_file_id());
-            let file =
-                program_archive.file_library.get_files().get(function.get_file_id()).unwrap();
+        let mut relevant_files_without_source = std::collections::HashSet::new();
+
+        // retrieve from funtions
+        program_archive.get_functions().iter().for_each(|(_fn_name, function)| {
+            files_ids.insert(function.get_file_id());
+        });
+        // retrieve from templates
+        program_archive.get_templates().iter().for_each(|(_tmpl_name, template)| {
+            files_ids.insert(template.get_file_id());
+        });
+        // retrieve from buses
+        program_archive.get_buses().iter().for_each(|(_bus_name, bus)| {
+            files_ids.insert(bus.get_file_id());
+        });
+
+        for file_id in &files_ids {
+            let file = program_archive.file_library.get_files().get(*file_id).unwrap();
             let name = file.name();
+            // note: technically we could retrieve the source in python
             let source = file.source();
-            //println!(" -> {}:{}", name, _fn_name);
             relevant_files.insert(name.trim_matches('"').to_string(), source.to_string());
+            relevant_files_without_source.insert(name.trim_matches('"').to_string());
         }
-        for (_template_name, template) in &program_archive.templates {
-            let file_id = template.get_file_id();
-            if files_ids.insert(file_id) {
-                continue;
-            }
-            //            println!("{name}:{}:{}", template.get_name(), template.get_file_id());
-            let file =
-                program_archive.file_library.get_files().get(template.get_file_id()).unwrap();
-            let name = file.name();
-            let source = file.source();
-            //println!(" -> {}:{}", name, name2);
-            relevant_files.insert(name.trim_matches('"').to_string(), source.to_string());
-        }
+
+        // debug
+        println!("main file id: {}", program_archive.get_file_id_main());
+        println!(
+            "file ids seen. lowest: {}, highest: {}",
+            files_ids.iter().min().unwrap(),
+            files_ids.iter().max().unwrap()
+        );
+
         // print to file
         serde_json::to_writer(
             std::fs::File::create("relevant_files.json").unwrap(),
             &relevant_files,
+        )
+        .unwrap();
+        serde_json::to_writer(
+            std::fs::File::create("relevant_files_without_source.json").unwrap(),
+            &relevant_files_without_source,
         )
         .unwrap();
     } else {
