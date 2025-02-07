@@ -72,7 +72,7 @@ fn start() -> Result<(), ()> {
         let mut idx = 0;
         let mut all_files = vec![];
         while let Some(file) = program_archive.file_library.get_files().get(idx) {
-            all_files.push(file.name());
+            all_files.push(file.name().trim_matches('"'));
             idx += 1;
         }
         serde_json::to_writer(
