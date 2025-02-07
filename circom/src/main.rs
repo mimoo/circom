@@ -68,6 +68,19 @@ fn start() -> Result<(), ()> {
             files_ids.iter().max().unwrap()
         );
 
+        // another debug
+        let mut idx = 0;
+        let mut all_files = vec![];
+        while let Some(file) = program_archive.file_library.get_files().get(idx) {
+            all_files.push(file.name());
+            idx += 1;
+        }
+        serde_json::to_writer(
+            std::fs::File::create("relevant_files_without_source_all_of_them.json").unwrap(),
+            &all_files,
+        )
+        .unwrap();
+
         // print to file
         serde_json::to_writer(
             std::fs::File::create("relevant_files.json").unwrap(),

@@ -90,6 +90,9 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
             let mut templates_calls = std::collections::HashMap::new();
             for t in &circuit.templates {
                 let calls = export_calls_from_inst(&t.body);
+                if t.name == "REGISTER" {
+                    println!("{}", t.to_string());
+                }
                 templates_ids.insert(t.id, t.name.clone());
                 templates_calls.insert(t.id, calls);
             }
