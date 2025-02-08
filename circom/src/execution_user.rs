@@ -45,25 +45,25 @@ pub fn execute_project(
     let start = std::time::Instant::now();
     let (exporter, vcp) = build_circuit(program_archive, build_config)?;
     let duration = start.elapsed();
-    println!("Time elapsed in building the circuit is: {:?}", duration);
+    println!("- time elapsed in building the circuit is: {:?}", duration);
 
     if config.r1cs_flag {
         let start = std::time::Instant::now();
         generate_output_r1cs(&config.r1cs, exporter.as_ref(), custom_gates)?;
         let duration = start.elapsed();
-        println!("Time elapsed in writing the R1CS is: {:?}", duration);
+        println!("- time elapsed in writing the R1CS is: {:?}", duration);
     }
     if config.sym_flag {
         let start = std::time::Instant::now();
         generate_output_sym(&config.sym, exporter.as_ref())?;
         let duration = start.elapsed();
-        println!("Time elapsed in writing the sym is: {:?}", duration);
+        println!("- time elapsed in writing the sym is: {:?}", duration);
     }
     if config.json_constraint_flag {
         let start = std::time::Instant::now();
         generate_json_constraints(&debug, exporter.as_ref())?;
         let duration = start.elapsed();
-        println!("Time elapsed in writing the JSON constraints is: {:?}", duration);
+        println!("- time elapsed in writing the JSON constraints is: {:?}", duration);
     }
     Result::Ok(vcp)
 }

@@ -20,6 +20,10 @@ fn main() {
 }
 
 fn start() -> Result<(), ()> {
+    let zkai_bugs = std::env::var("ZKAI_BUGS").unwrap_or("false".to_string());
+    if zkai_bugs != "false" {
+        println!("SnarkSentinel fork of Circom running...");
+    }
     use compilation_user::CompilerConfig;
     use execution_user::ExecutionConfig;
     let user_input = Input::new()?;
@@ -28,10 +32,10 @@ fn start() -> Result<(), ()> {
     let mut program_archive = parser_user::parse_project(&user_input)?;
     type_analysis_user::analyse_project(&mut program_archive)?;
     let duration = start.elapsed();
-    println!("Time elapsed in type analysis is: {:?}", duration);
+    println!("- time elapsed in type analysis is: {:?}", duration);
 
     // Note: we collect all the files that are relevant to the compilation of the given command
-    let zkai_bugs = std::env::var("ZKAI_BUGS").unwrap_or("false".to_string());
+
     if zkai_bugs != "false" {
         let mut files_ids = std::collections::HashSet::new();
         files_ids.insert(*program_archive.get_file_id_main());
@@ -60,15 +64,8 @@ fn start() -> Result<(), ()> {
             relevant_files_without_source.insert(name.trim_matches('"').to_string());
         }
 
-        // debug
-        println!("main file id: {}", program_archive.get_file_id_main());
-        println!(
-            "file ids seen. lowest: {}, highest: {}",
-            files_ids.iter().min().unwrap(),
-            files_ids.iter().max().unwrap()
-        );
-
-        // another debug
+        // print all relevant files
+        // we do not use other ways because otherwise some files disappear during constant folding
         let mut idx = 0;
         let mut all_files = vec![];
         while let Some(file) = program_archive.file_library.get_files().get(idx) {
@@ -78,18 +75,6 @@ fn start() -> Result<(), ()> {
         serde_json::to_writer(
             std::fs::File::create("relevant_files_without_source_all_of_them.json").unwrap(),
             &all_files,
-        )
-        .unwrap();
-
-        // print to file
-        serde_json::to_writer(
-            std::fs::File::create("relevant_files.json").unwrap(),
-            &relevant_files,
-        )
-        .unwrap();
-        serde_json::to_writer(
-            std::fs::File::create("relevant_files_without_source.json").unwrap(),
-            &relevant_files_without_source,
         )
         .unwrap();
     } else {
@@ -117,7 +102,7 @@ fn start() -> Result<(), ()> {
     let start = std::time::Instant::now();
     let circuit = execution_user::execute_project(program_archive, config)?;
     let duration = start.elapsed();
-    println!("Time elapsed in execution is: {:?}", duration);
+    println!("- time elapsed in execution is: {:?}", duration);
 
     // let zkai_bugs = std::env::var("ZKAI_BUGS").unwrap_or("false".to_string());
     // if zkai_bugs != "false" {

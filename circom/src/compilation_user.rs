@@ -83,7 +83,7 @@ pub fn compile(config: CompilerConfig) -> Result<(), ()> {
             VERSION,
         )?;
         let duration = start.elapsed();
-        println!("Time elapsed in building the circuit is: {:?}", duration);
+        println!("- time elapsed in building the circuit is: {:?}", duration);
 
         if zkai_bugs != "false" {
             let mut templates_ids = std::collections::HashMap::new();
