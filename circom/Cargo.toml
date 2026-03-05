@@ -24,3 +24,12 @@ clap = "2.33.0"
 ansi_term = "0.12.1"
 wast = "39.0.0"
 exitcode = "1.1.2"
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+[[bin]]
+name = "circom"
+path = "src/main.rs"
+
+[[bin]]
+name = "circom-cg"
+path = "src/circom_cg.rs"

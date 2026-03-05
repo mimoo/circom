@@ -1,3 +1,4 @@
+mod callgraph;
 mod compilation_user;
 mod execution_user;
 mod input_user;
@@ -10,6 +11,15 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 use ansi_term::Colour;
 use input_user::Input;
 fn main() {
+    // Short-circuit for --callgraph before normal CLI parsing
+    if let Some(result) = callgraph::maybe_run() {
+        if result.is_err() {
+            eprintln!("{}", Colour::Red.paint("previous errors were found"));
+            std::process::exit(1);
+        }
+        return;
+    }
+
     let result = start();
     if result.is_err() {
         eprintln!("{}", Colour::Red.paint("previous errors were found"));
@@ -43,7 +53,7 @@ fn start() -> Result<(), ()> {
         r1cs: user_input.r1cs_file().to_string(),
         json_constraints: user_input.json_constraints_file().to_string(),
         json_substitutions: user_input.json_substitutions_file().to_string(),
-        prime: user_input.prime(),        
+        prime: user_input.prime(),
     };
     let circuit = execution_user::execute_project(program_archive, config)?;
     let compilation_config = CompilerConfig {
@@ -63,7 +73,7 @@ fn start() -> Result<(), ()> {
         produce_input_log: user_input.main_inputs_flag(),
         sanity_check_style: user_input.sanity_check_style(),
         no_asm_flag: user_input.no_asm_flag(),
-        prime: user_input.prime(),        
+        prime: user_input.prime(),
     };
     compilation_user::compile(compilation_config)?;
     Result::Ok(())
