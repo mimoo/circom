@@ -37,11 +37,17 @@ fn main() {
             cmd_callers(&conn, &args[2]);
         }
         "source" => {
-            if args.len() != 4 {
-                eprintln!("Usage: circom-cg source <name> <db>");
+            let full = args.iter().any(|a| a == "--full");
+            let names: Vec<&str> = args[2..args.len() - 1]
+                .iter()
+                .filter(|a| *a != "--full")
+                .map(|s| s.as_str())
+                .collect();
+            if names.len() != 1 {
+                eprintln!("Usage: circom-cg source [--full] <name> <db>");
                 process::exit(1);
             }
-            cmd_source(&conn, &args[2]);
+            cmd_source(&conn, names[0], full);
         }
         "list" => {
             cmd_list(&conn);
@@ -60,7 +66,7 @@ fn print_usage() {
     eprintln!("Commands:");
     eprintln!("  callees <name> <db>   List templates/functions called by <name>");
     eprintln!("  callers <name> <db>   List templates/functions that call <name>");
-    eprintln!("  source  <name> <db>   Print the source code of <name>");
+    eprintln!("  source  [--full] <name> <db>   Print source code (truncated by default, --full for all)");
     eprintln!("  list    <db>          List all templates and functions");
 }
 
@@ -108,7 +114,9 @@ fn cmd_callers(conn: &Connection, name: &str) {
     }
 }
 
-fn cmd_source(conn: &Connection, name: &str) {
+const SOURCE_PREVIEW_LINES: usize = 15;
+
+fn cmd_source(conn: &Connection, name: &str, full: bool) {
     let result: Result<(String, String, String), _> = conn.query_row(
         "SELECT kind, file, source FROM entities WHERE name = ?1",
         params![name],
@@ -116,8 +124,19 @@ fn cmd_source(conn: &Connection, name: &str) {
     );
     match result {
         Ok((kind, file, source)) => {
-            println!("// {} {} ({})", kind, name, file);
-            println!("{}", source);
+            let total_lines = source.lines().count();
+            println!("// {} {} ({}) [{} lines]", kind, name, file, total_lines);
+            if full || total_lines <= SOURCE_PREVIEW_LINES {
+                println!("{}", source);
+            } else {
+                for line in source.lines().take(SOURCE_PREVIEW_LINES) {
+                    println!("{}", line);
+                }
+                println!(
+                    "// ... truncated ({} more lines, use --full to see all)",
+                    total_lines - SOURCE_PREVIEW_LINES
+                );
+            }
         }
         Err(_) => {
             eprintln!("Entity '{}' not found", name);
