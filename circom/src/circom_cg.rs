@@ -132,9 +132,9 @@ fn cmd_source(conn: &Connection, name: &str, full: bool) {
                 for line in source.lines().take(SOURCE_PREVIEW_LINES) {
                     println!("{}", line);
                 }
-                println!(
-                    "// ... truncated ({} more lines, use --full to see all)",
-                    total_lines - SOURCE_PREVIEW_LINES
+                eprintln!(
+                    "[truncated: showing 15 of {} lines, use --full to see all]",
+                    total_lines
                 );
             }
         }
