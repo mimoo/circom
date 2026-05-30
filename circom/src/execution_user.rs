@@ -18,6 +18,8 @@ pub struct ExecutionConfig {
     pub flag_verbose: bool,
     pub inspect_constraints_flag: bool,
     pub sym_flag: bool,
+    pub sym_templates_info_flag: bool,
+    pub templates: String,
     pub r1cs_flag: bool,
     pub json_substitution_flag: bool,
     pub json_constraint_flag: bool,
@@ -49,15 +51,21 @@ pub fn execute_project(
     }
     if config.sym_flag {
         generate_output_sym(&config.sym, exporter.as_ref())?;
+    }
+    if config.sym_templates_info_flag {
         // The templates.json output is only available from the DAG exporter,
-        // which is kept when simplification is disabled (--O0 / flag_f). In the
-        // simplified path the exporter is a ConstraintList, which does not
-        // implement templates(), so we skip it to keep plain --sym runs working.
-        if config.flag_f {
-            // replace the trailing .sym of the output path with .templates.json
-            let templates_file = config.sym.replace(".sym", ".templates.json");
-            generate_templates_output(&templates_file, exporter.as_ref())?;
+        // which is kept when simplification is disabled (--O0 / flag_f). This is
+        // validated up front in input_user, but we guard here as well so the
+        // ConstraintList exporter (which does not implement templates()) is
+        // never asked for it.
+        if !config.flag_f {
+            eprintln!(
+                "{}",
+                Colour::Red.paint("--sym-templates-info can only be used with the O0 optimization level (--O0)")
+            );
+            return Result::Err(());
         }
+        generate_templates_output(&config.templates, exporter.as_ref())?;
     }
     if config.json_constraint_flag {
         generate_json_constraints(&debug, exporter.as_ref())?;

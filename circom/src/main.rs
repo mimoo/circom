@@ -49,6 +49,8 @@ fn start() -> Result<(), ()> {
         json_constraint_flag: user_input.json_constraints_flag(),
         json_substitution_flag: user_input.json_substitutions_flag(),
         sym_flag: user_input.sym_flag(),
+        sym_templates_info_flag: user_input.sym_templates_info_flag(),
+        templates: user_input.templates_file().to_string(),
         sym: user_input.sym_file().to_string(),
         r1cs: user_input.r1cs_file().to_string(),
         json_constraints: user_input.json_constraints_file().to_string(),
