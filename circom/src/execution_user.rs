@@ -49,6 +49,15 @@ pub fn execute_project(
     }
     if config.sym_flag {
         generate_output_sym(&config.sym, exporter.as_ref())?;
+        // The templates.json output is only available from the DAG exporter,
+        // which is kept when simplification is disabled (--O0 / flag_f). In the
+        // simplified path the exporter is a ConstraintList, which does not
+        // implement templates(), so we skip it to keep plain --sym runs working.
+        if config.flag_f {
+            // replace the trailing .sym of the output path with .templates.json
+            let templates_file = config.sym.replace(".sym", ".templates.json");
+            generate_templates_output(&templates_file, exporter.as_ref())?;
+        }
     }
     if config.json_constraint_flag {
         generate_json_constraints(&debug, exporter.as_ref())?;
@@ -82,6 +91,16 @@ fn generate_json_constraints(
 ) -> Result<(), ()> {
     if let Ok(()) = exporter.json_constraints(&debug) {
         println!("{} {}", Colour::Green.paint("Constraints written in:"), debug.json_constraints);
+        Result::Ok(())
+    } else {
+        eprintln!("{}", Colour::Red.paint("Could not write the output in the given path"));
+        Result::Err(())
+    }
+}
+
+fn generate_templates_output(file: &str, exporter: &dyn ConstraintExporter) -> Result<(), ()> {
+    if let Result::Ok(()) = exporter.templates(file) {
+        println!("{} {}", Colour::Green.paint("Written successfully:"), file);
         Result::Ok(())
     } else {
         eprintln!("{}", Colour::Red.paint("Could not write the output in the given path"));

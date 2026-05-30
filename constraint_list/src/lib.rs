@@ -177,6 +177,13 @@ impl ConstraintExporter for ConstraintList {
     fn sym(&self, out: &str) -> Result<(), ()> {
         sym_porting::port_sym(self, out)
     }
+
+    fn templates(&self, _out: &str) -> Result<(), ()> {
+        // The templates.json output is only produced from the DAG exporter,
+        // which is kept when simplification is disabled (--O0). The simplified
+        // ConstraintList exporter is never asked for it (see execution_user).
+        unreachable!("templates output requires the DAG exporter (--O0)")
+    }
 }
 
 impl ConstraintList {
