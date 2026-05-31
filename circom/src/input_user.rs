@@ -14,6 +14,7 @@ pub struct Input {
     pub out_c_code: PathBuf,
     pub out_c_dat: PathBuf,
     pub out_sym: PathBuf,
+    pub out_templates: PathBuf,
     //pub field: &'static str,
     pub c_flag: bool,
     pub wasm_flag: bool,
@@ -22,6 +23,7 @@ pub struct Input {
     pub sanity_check_style: usize,
     pub r1cs_flag: bool,
     pub sym_flag: bool,
+    pub sym_templates_info_flag: bool,
     pub json_constraint_flag: bool,
     pub json_substitution_flag: bool,
     pub main_inputs_flag: bool,
@@ -69,6 +71,15 @@ impl Input {
         let o_style = input_processing::get_simplification_style(&matches)?;
         let sanity_check_style = input_processing::get_sanity_check_style(&matches)?;
         let link_libraries = input_processing::get_link_libraries(&matches);
+        let sym_templates_info_flag = input_processing::get_sym_templates_info(&matches);
+        if sym_templates_info_flag && o_style != SimplificationStyle::O0 {
+            return Result::Err(eprintln!(
+                "{}",
+                Colour::Red.paint(
+                    "The --sym-templates-info flag can only be used with the O0 optimization level (--O0)"
+                )
+            ));
+        }
         Result::Ok(Input {
             //field: P_BN128,
             input_program: input,
@@ -82,6 +93,7 @@ impl Input {
             out_c_code: Input::build_output(&output_c_path, &file_name, CPP),
             out_c_dat: Input::build_output(&output_c_path, &file_name, DAT),
             out_sym: Input::build_output(&output_path, &file_name, SYM),
+            out_templates: Input::build_output(&output_path, &file_name, "templates.json"),
             out_json_constraints: Input::build_output(
                 &output_path,
                 &format!("{}_constraints", file_name),
@@ -99,6 +111,7 @@ impl Input {
             sanity_check_style: sanity_check_style as usize,
             r1cs_flag: input_processing::get_r1cs(&matches),
             sym_flag: input_processing::get_sym(&matches),
+            sym_templates_info_flag,
             main_inputs_flag: input_processing::get_main_inputs_log(&matches),
             json_constraint_flag: input_processing::get_json_constraints(&matches),
             json_substitution_flag: input_processing::get_json_substitutions(&matches),
@@ -141,6 +154,9 @@ impl Input {
     }
     pub fn sym_file(&self) -> &str {
         self.out_sym.to_str().unwrap()
+    }
+    pub fn templates_file(&self) -> &str {
+        self.out_templates.to_str().unwrap()
     }
     pub fn wat_file(&self) -> &str {
         self.out_wat_code.to_str().unwrap()
@@ -206,6 +222,9 @@ impl Input {
     }
     pub fn sym_flag(&self) -> bool {
         self.sym_flag
+    }
+    pub fn sym_templates_info_flag(&self) -> bool {
+        self.sym_templates_info_flag
     }
     pub fn print_ir_flag(&self) -> bool {
         self.print_ir_flag
@@ -320,6 +339,10 @@ mod input_processing {
 
     pub fn get_sym(matches: &ArgMatches) -> bool {
         matches.is_present("print_sym")
+    }
+
+    pub fn get_sym_templates_info(matches: &ArgMatches) -> bool {
+        matches.is_present("sym_templates_info")
     }
 
     pub fn get_r1cs(matches: &ArgMatches) -> bool {
@@ -481,6 +504,13 @@ mod input_processing {
                     .takes_value(false)
                     .display_order(60)
                     .help("Outputs witness in sym format"),
+            )
+            .arg(
+                Arg::with_name("sym_templates_info")
+                    .long("sym-templates-info")
+                    .takes_value(false)
+                    .display_order(61)
+                    .help("Outputs a <name>.templates.json file mapping each template to its signals (requires --O0)"),
             )
             .arg(
                 Arg::with_name("print_r1cs")

@@ -3,6 +3,7 @@ mod json_porting;
 mod map_to_constraint_list;
 mod r1cs_porting;
 mod sym_porting;
+mod templates_porting;
 mod witness_producer;
 use circom_algebra::num_bigint::BigInt;
 use constraint_list::ConstraintList;
@@ -313,6 +314,10 @@ impl ConstraintExporter for DAG {
     fn sym(&self, out: &str) -> Result<(), ()> {
         DAG::generate_sym_output(self, out)
     }
+
+    fn templates(&self, out: &str) -> Result<(), ()> {
+        DAG::generate_templates_output(self, out)
+    }
 }
 
 impl DAG {
@@ -484,6 +489,10 @@ impl DAG {
 
     pub fn generate_sym_output(&self, output_file: &str) -> Result<(), ()> {
         sym_porting::write(self, output_file)
+    }
+
+    pub fn generate_templates_output(&self, output_file: &str) -> Result<(), ()> {
+        templates_porting::write(self, output_file)
     }
 
     pub fn generate_json_constraints(&self, debug: &DebugWriter) -> Result<(), ()> {
